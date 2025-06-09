@@ -1,9 +1,10 @@
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
+import { Product } from "../types"; // Import the Product interface
 
 interface ProductCardProps {
-  product: any;
+  product: Product; // Changed from any to Product
   onNavigate: (page: any, slug?: string) => void;
 }
 

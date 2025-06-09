@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { api } from "./_generated/api"; // Import api
 
 export const list = query({
   args: {},
@@ -39,10 +40,9 @@ export const getById = query({
     }
 
     // Check if user owns this order or is admin
-    const user = await ctx.db.get(userId);
-    const isAdmin = user?.email?.includes("admin");
+    const isUserAdmin = await ctx.runQuery(api.roles.isAdmin);
     
-    if (order.userId !== userId && !isAdmin) {
+    if (order.userId !== userId && !isUserAdmin) {
       throw new Error("Unauthorized");
     }
 
@@ -118,10 +118,9 @@ export const updateStatus = mutation({
     }
 
     // Check if user is admin
-    const user = await ctx.db.get(userId);
-    const isAdmin = user?.email?.includes("admin");
+    const isUserAdmin = await ctx.runQuery(api.roles.isAdmin);
     
-    if (!isAdmin) {
+    if (!isUserAdmin) {
       throw new Error("Admin access required");
     }
 
@@ -161,10 +160,9 @@ export const getOrderWithProducts = query({
     }
 
     // Check if user owns this order or is admin
-    const user = await ctx.db.get(userId);
-    const isAdmin = user?.email?.includes("admin");
+    const isUserAdmin = await ctx.runQuery(api.roles.isAdmin);
     
-    if (order.userId !== userId && !isAdmin) {
+    if (order.userId !== userId && !isUserAdmin) {
       throw new Error("Unauthorized");
     }
 

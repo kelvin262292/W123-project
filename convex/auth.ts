@@ -3,7 +3,7 @@ import { Password } from "@convex-dev/auth/providers/Password";
 import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api"; // Import api
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [Password, Anonymous],
@@ -25,7 +25,10 @@ export const loggedInUser = query({
 
 export const getAllUsers = query({
   handler: async (ctx) => {
-    // TODO: Add admin authentication check
+    const isUserAdmin = await ctx.runQuery(api.roles.isAdmin);
+    if (!isUserAdmin) {
+      throw new Error("Unauthorized: Admin access required to fetch all users.");
+    }
     return await ctx.db.query("users").collect();
   },
 });
