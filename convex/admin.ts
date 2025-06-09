@@ -1,43 +1,45 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-
-// Helper function to check admin permissions
-async function requireAdmin(ctx: any) {
-  const userId = await getAuthUserId(ctx);
-  if (!userId) {
-    throw new Error("Unauthorized - Please login");
-  }
-  
-  const user = await ctx.db.get(userId);
-  if (!user) {
-    throw new Error("User not found");
-  }
-  
-  // Check if user is admin (email contains "admin" or specific admin email)
-  const isAdmin = user.email?.includes("admin") || user.email === "admin@shopvn.com";
-  if (!isAdmin) {
-    throw new Error("Admin access required");
-  }
-  
-  return { userId, user };
-}
+import { api } from "./_generated/api";
 
 // Check if user is admin
 export const isAdmin = query({
   args: {},
-  handler: async (ctx) => {
+  returns: v.boolean(),
+  handler: async (ctx): Promise<boolean> => {
     try {
-      await requireAdmin(ctx);
-      return true;
+      const isUserAdmin: boolean = await ctx.runQuery(api.roles.isAdmin);
+      return isUserAdmin;
     } catch {
       return false;
     }
   },
 });
 
+// Helper function to check admin access and throw error if not admin
+async function requireAdmin(ctx: any): Promise<{ userId: string }> {
+  const userId = await getAuthUserId(ctx);
+  if (!userId) {
+    throw new Error("Unauthorized - Please login");
+  }
+  
+  const isUserAdmin: boolean = await ctx.runQuery(api.roles.isAdmin);
+  if (!isUserAdmin) {
+    throw new Error("Admin access required");
+  }
+  
+  return { userId };
+}
+
 export const getStats = query({
   args: { timeRange: v.string() },
+  returns: v.object({
+    revenue: v.number(),
+    orders: v.number(),
+    customers: v.number(),
+    completionRate: v.number(),
+  }),
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -206,10 +208,17 @@ export const updateOrderStatus = mutation({
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
-    
-    return await ctx.db.patch(args.orderId, {
+
+    const order = await ctx.db.get(args.orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    await ctx.db.patch(args.orderId, {
       status: args.status,
     });
+
+    return { success: true };
   },
 });
 

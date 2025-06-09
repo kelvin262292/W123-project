@@ -78,9 +78,9 @@ export function AdminLayout({ onNavigate }: AdminLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex" data-testid="admin-dashboard">
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? "w-64" : "w-20"} bg-white shadow-xl transition-all duration-300 flex flex-col`}>
+      <div className={`${sidebarOpen ? "w-64" : "w-20"} bg-white shadow-xl transition-all duration-300 flex flex-col`} data-testid="admin-sidebar">
         {/* Logo */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -97,7 +97,7 @@ export function AdminLayout({ onNavigate }: AdminLayoutProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2" data-testid="admin-nav">
           {menuItems.map((item) => (
             <button
               key={item.key}
@@ -107,6 +107,7 @@ export function AdminLayout({ onNavigate }: AdminLayoutProps) {
                   ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
+              data-testid={`${item.key}-nav-link`}
             >
               <span className={`text-xl ${currentPage === item.key ? "scale-110" : "group-hover:scale-110"} transition-transform`}>
                 {item.icon}
@@ -134,6 +135,7 @@ export function AdminLayout({ onNavigate }: AdminLayoutProps) {
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="w-full flex items-center justify-center p-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+            data-testid="sidebar-toggle"
           >
             <span className="text-xl">
               {sidebarOpen ? "◀️" : "▶️"}
@@ -143,7 +145,7 @@ export function AdminLayout({ onNavigate }: AdminLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col" data-testid="admin-content">
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200 px-8 py-4">
           <div className="flex items-center justify-between">
@@ -151,6 +153,7 @@ export function AdminLayout({ onNavigate }: AdminLayoutProps) {
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                data-testid="mobile-sidebar-toggle"
               >
                 <span className="text-xl">☰</span>
               </button>
@@ -160,6 +163,7 @@ export function AdminLayout({ onNavigate }: AdminLayoutProps) {
                   type="text"
                   placeholder="Tìm kiếm..."
                   className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  data-testid="admin-search-input"
                 />
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                   🔍
@@ -172,13 +176,14 @@ export function AdminLayout({ onNavigate }: AdminLayoutProps) {
               <button
                 onClick={() => onNavigate("home")}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                data-testid="back-to-store"
               >
                 <span>🏪</span>
                 <span className="hidden md:inline">Về cửa hàng</span>
               </button>
 
               {/* Notifications */}
-              <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+              <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg" data-testid="admin-notifications">
                 <span className="text-xl">🔔</span>
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                   3
@@ -186,7 +191,7 @@ export function AdminLayout({ onNavigate }: AdminLayoutProps) {
               </button>
 
               {/* Profile */}
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3" data-testid="admin-profile">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-sm">A</span>
                 </div>
@@ -199,9 +204,34 @@ export function AdminLayout({ onNavigate }: AdminLayoutProps) {
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 p-8 overflow-auto">
-          {renderContent()}
+        {/* Main Content Area */}
+        <main className="flex-1 p-8 overflow-auto" data-testid="admin-main-content">
+          {/* Page Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">
+              {currentPage === "dashboard" && "Dashboard"}
+              {currentPage === "products" && "Quản lý Sản phẩm"}
+              {currentPage === "orders" && "Quản lý Đơn hàng"}
+              {currentPage === "customers" && "Quản lý Khách hàng"}
+              {currentPage === "categories" && "Quản lý Danh mục"}
+              {currentPage === "reports" && "Báo cáo"}
+              {currentPage === "settings" && "Cài đặt Hệ thống"}
+            </h1>
+            <p className="text-gray-600 mt-2">
+              {currentPage === "dashboard" && "Xem tổng quan về hoạt động của cửa hàng"}
+              {currentPage === "products" && "Quản lý danh sách sản phẩm, thêm, sửa, xóa sản phẩm"}
+              {currentPage === "orders" && "Xem và xử lý các đơn hàng mới nhất"}
+              {currentPage === "customers" && "Quản lý thông tin khách hàng"}
+              {currentPage === "categories" && "Quản lý các danh mục sản phẩm"}
+              {currentPage === "reports" && "Xem các báo cáo về doanh thu và hoạt động"}
+              {currentPage === "settings" && "Thiết lập cấu hình hệ thống"}
+            </p>
+          </div>
+
+          {/* Page Content */}
+          <div data-testid={`${currentPage}-management`}>
+            {renderContent()}
+          </div>
         </main>
       </div>
     </div>

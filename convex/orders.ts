@@ -94,7 +94,8 @@ export const create = mutation({
       couponCode: args.couponCode,
       discountAmount: args.discountAmount,
       shippingFee: args.shippingFee,
-      notes: args.notes
+      notes: args.notes,
+      createdAt: Date.now()
     });
   },
 });
@@ -213,5 +214,25 @@ export const cancelOrder = mutation({
     return await ctx.db.patch(args.orderId, {
       status: "cancelled"
     });
+  },
+});
+
+export const listByDateRange = query({
+  args: {
+    startDate: v.number(),
+    endDate: v.number(),
+  },
+  returns: v.array(v.any()),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("orders")
+      .filter((q) => 
+        q.and(
+          q.gte(q.field("createdAt"), args.startDate),
+          q.lte(q.field("createdAt"), args.endDate)
+        )
+      )
+      .order("desc")
+      .collect();
   },
 });

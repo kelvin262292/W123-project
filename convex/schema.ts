@@ -44,6 +44,8 @@ const applicationTables = {
       width: v.number(),
       height: v.number(),
     })),
+    createdBy: v.optional(v.id("users")),
+    updatedAt: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
     .index("by_category", ["categoryId"])
@@ -70,6 +72,7 @@ const applicationTables = {
       value: v.string(),
     }))),
     price: v.number(),
+    addedAt: v.number(),
   })
     .index("by_user", ["userId"])
     .index("by_product", ["productId"])
@@ -109,6 +112,8 @@ const applicationTables = {
     couponCode: v.optional(v.string()),
     discountAmount: v.optional(v.number()),
     shippingFee: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
   }).index("by_user", ["userId"]),
 
   paymentTransactions: defineTable({
@@ -135,6 +140,7 @@ const applicationTables = {
     isVerified: v.boolean(),
     isApproved: v.boolean(),
     helpfulCount: v.optional(v.number()),
+    createdAt: v.number(),
   })
     .index("by_product", ["productId"])
     .index("by_user", ["userId"]),
@@ -189,6 +195,35 @@ const applicationTables = {
     value: v.any(),
     description: v.optional(v.string()),
   }).index("by_key", ["key"]),
+  
+  passwordResets: defineTable({
+    userId: v.id("users"),
+    resetCode: v.string(),
+    expirationTime: v.number(),
+    isUsed: v.boolean(),
+    createdAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_reset_code", ["resetCode"]),
+    
+  userRoles: defineTable({
+    userId: v.id("users"),
+    role: v.union(
+      v.literal("user"),
+      v.literal("admin"),
+      v.literal("moderator"),
+      v.literal("support")
+    ),
+    permissions: v.optional(v.array(v.string())),
+    assignedBy: v.optional(v.id("users")),
+    assignedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+    createdBy: v.optional(v.id("users")),
+  })
+    .index("by_user", ["userId"])
+    .index("by_role", ["role"])
+    .index("by_user_role", ["userId", "role"]),
 };
 
 export default defineSchema({

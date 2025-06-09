@@ -50,6 +50,7 @@ export const add = mutation({
         quantity: args.quantity,
         variants: args.variants,
         price: product.price,
+        addedAt: Date.now(),
       });
     }
   },

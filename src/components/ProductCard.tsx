@@ -36,10 +36,15 @@ export function ProductCard({ product, onNavigate }: ProductCardProps) {
 
   const isOutOfStock = product.stock === 0;
 
+  const handleCardClick = () => {
+    onNavigate("product", product.slug);
+  };
+
   return (
-    <button 
-      onClick={() => onNavigate("product", product.slug)} 
-      className="group block w-full text-left"
+    <div 
+      onClick={handleCardClick}
+      className="group block w-full text-left cursor-pointer"
+      data-testid={`product-card-${product.slug}`}
     >
       <div className={`bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden ${
         isOutOfStock ? "out-of-stock-overlay" : ""
@@ -71,6 +76,8 @@ export function ProductCard({ product, onNavigate }: ProductCardProps) {
             <button
               onClick={handleAddToCart}
               className="absolute bottom-3 right-3 bg-blue-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:bg-blue-700 shadow-lg z-10"
+              data-testid={`add-to-cart-${product.slug}`}
+              aria-label={`Thêm ${product.name} vào giỏ hàng`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9" />
@@ -127,6 +134,6 @@ export function ProductCard({ product, onNavigate }: ProductCardProps) {
           )}
         </div>
       </div>
-    </button>
+    </div>
   );
 }

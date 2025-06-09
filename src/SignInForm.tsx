@@ -2,11 +2,21 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ForgotPasswordForm } from "./ForgotPasswordForm";
 
-export function SignInForm() {
+export function SignInForm({ onSuccess }: { onSuccess?: () => void }) {
   const { signIn } = useAuthActions();
-  const [flow, setFlow] = useState<"signIn" | "signUp">("signIn");
+  const [flow, setFlow] = useState<"signIn" | "signUp" | "forgotPassword">("signIn");
   const [submitting, setSubmitting] = useState(false);
+
+  if (flow === "forgotPassword") {
+    return (
+      <ForgotPasswordForm 
+        onSuccess={() => setFlow("signIn")}
+        onCancel={() => setFlow("signIn")}
+      />
+    );
+  }
 
   return (
     <div className="w-full">
@@ -17,19 +27,23 @@ export function SignInForm() {
           setSubmitting(true);
           const formData = new FormData(e.target as HTMLFormElement);
           formData.set("flow", flow);
-          void signIn("password", formData).catch((error) => {
-            let toastTitle = "";
-            if (error.message.includes("Invalid password")) {
-              toastTitle = "Mật khẩu không đúng. Vui lòng thử lại.";
-            } else {
-              toastTitle =
-                flow === "signIn"
-                  ? "Không thể đăng nhập. Bạn có muốn đăng ký tài khoản mới?"
-                  : "Không thể đăng ký. Bạn có muốn đăng nhập?";
-            }
-            toast.error(toastTitle);
-            setSubmitting(false);
-          });
+          void signIn("password", formData)
+            .then(() => {
+              onSuccess?.();
+            })
+            .catch((error) => {
+              let toastTitle = "";
+              if (error.message.includes("Invalid password")) {
+                toastTitle = "Mật khẩu không đúng. Vui lòng thử lại.";
+              } else {
+                toastTitle =
+                  flow === "signIn"
+                    ? "Không thể đăng nhập. Bạn có muốn đăng ký tài khoản mới?"
+                    : "Không thể đăng ký. Bạn có muốn đăng nhập?";
+              }
+              toast.error(toastTitle);
+              setSubmitting(false);
+            });
         }}
       >
         <input
@@ -46,6 +60,17 @@ export function SignInForm() {
           placeholder="Mật khẩu"
           required
         />
+        
+        <div className="flex justify-end">
+          <button
+            type="button"
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+            onClick={() => setFlow("forgotPassword")}
+          >
+            Quên mật khẩu?
+          </button>
+        </div>
+        
         <button className="auth-button" type="submit" disabled={submitting}>
           {submitting ? "Đang xử lý..." : (flow === "signIn" ? "Đăng nhập" : "Đăng ký")}
         </button>
