@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
+import { Product, ProductVariant } from "../types"; // Import Product and ProductVariant
 
 interface ProductPageProps {
   slug: string;
@@ -61,13 +62,13 @@ export function ProductPage({ slug, onNavigate }: ProductPageProps) {
     : 0;
 
   // Group variants by type
-  const variantsByType = product.variants?.reduce((acc: Record<string, any[]>, variant: any) => {
+  const variantsByType = product.variants?.reduce((acc: Record<string, ProductVariant[]>, variant: ProductVariant) => {
     if (!acc[variant.type]) {
       acc[variant.type] = [];
     }
     acc[variant.type].push(variant);
     return acc;
-  }, {} as Record<string, any[]>) || {};
+  }, {} as Record<string, ProductVariant[]>) || {};
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -171,7 +172,7 @@ export function ProductPage({ slug, onNavigate }: ProductPageProps) {
                 {type === "size" ? "Kích thước" : type === "color" ? "Màu sắc" : type}
               </h3>
               <div className="flex flex-wrap gap-2">
-                {(variants as any[]).map((variant: any) => (
+                {variants.map((variant: ProductVariant) => ( // Explicitly type variant here
                   <button
                     key={`${variant.type}-${variant.value}`}
                     onClick={() => setSelectedVariants(prev => ({
@@ -184,7 +185,7 @@ export function ProductPage({ slug, onNavigate }: ProductPageProps) {
                         : "border-gray-300 hover:border-gray-400"
                     }`}
                   >
-                    {variant.name}
+                    {variant.name || variant.value} {/* Use name if available, else value */}
                   </button>
                 ))}
               </div>
