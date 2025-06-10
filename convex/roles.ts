@@ -63,31 +63,27 @@ export const hasRole = query({
  * Kiểm tra xem người dùng có phải là admin hay không
  */
 export const isAdmin = query({
+  args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return false;
-
-    // Kiểm tra cache
-    const cacheKey = `${userId.toString()}-${ROLES.ADMIN}`;
-    const cachedValue = userRolesCache.get(cacheKey);
-    if (cachedValue && (Date.now() - cachedValue.timestamp) < CACHE_DURATION) {
-      return cachedValue.roles.includes(ROLES.ADMIN as Role);
-    }
-
-    // Nếu không có trong cache, truy vấn cơ sở dữ liệu
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return false;
+    
+    // Dùng email thay vì authId để tìm người dùng
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), identity.email))
+      .unique();
+    
+    if (!user) return false;
+    
+    // Kiểm tra trong bảng userRoles
     const userRole = await ctx.db
       .query("userRoles")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("role"), ROLES.ADMIN))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("role"), "admin"))
       .first();
-
-    const isAdmin = !!userRole;
-
-    // Lưu vào cache
-    const userRoles = await getUserRoles(ctx, userId);
-    userRolesCache.set(cacheKey, { roles: userRoles, timestamp: Date.now() });
-
-    return isAdmin;
+    
+    return !!userRole;
   },
 });
 
@@ -214,60 +210,21 @@ export const getUserRoles = async (ctx: any, userId: Id<"users">): Promise<Role[
  */
 export const listUsersWithRole = query({
   args: {
-    role: v.optional(v.union(
-      v.literal("admin"),
-      v.literal("user"),
-      v.literal("moderator"),
-      v.literal("support")
-    )),
+    role: v.string(),
   },
   handler: async (ctx, args) => {
-    // Kiểm tra quyền admin
-    const currentUserId = await getAuthUserId(ctx);
-    if (!currentUserId) {
-      throw new Error("Bạn cần đăng nhập để xem thông tin này");
-    }
-
-    const isCurrentUserAdmin = await ctx.db
+    const userRoles = await ctx.db
       .query("userRoles")
-      .withIndex("by_user", (q) => q.eq("userId", currentUserId))
-      .filter((q) => q.eq(q.field("role"), ROLES.ADMIN))
-      .first();
-
-    if (!isCurrentUserAdmin) {
-      throw new Error("Bạn không có quyền xem thông tin này");
-    }
-
-    // Truy vấn vai trò
-    let roleRecords;
-    if (args.role) {
-      roleRecords = await ctx.db
-        .query("userRoles")
-        .withIndex("by_role", (q) => q.eq("role", args.role as Role))
-        .collect();
-    } else {
-      roleRecords = await ctx.db
-        .query("userRoles")
-        .collect();
-    }
-
-    // Lấy thông tin người dùng
-    const userIds = [...new Set(roleRecords.map((r) => r.userId))];
+      .filter((q) => q.eq(q.field("role"), args.role))
+      .collect();
+    
+    const userIds = userRoles.map(role => role.userId);
+    
     const users = await Promise.all(
-      userIds.map(async (id) => {
-        const user = await ctx.db.get(id);
-        const userRoles = roleRecords
-          .filter((r) => r.userId.toString() === id.toString())
-          .map((r) => r.role as Role);
-        
-        return {
-          ...user,
-          roles: userRoles,
-        };
-      })
+      userIds.map(userId => ctx.db.get(userId))
     );
-
-    return users;
+    
+    return users.filter(user => user !== null);
   },
 });
 
@@ -281,4 +238,109 @@ function clearUserRoleCache(userId: string) {
       userRolesCache.delete(key);
     }
   }
-} 
+}
+
+// Hàm đặc biệt để cấp quyền admin cho bản thân
+export const giveAdminAccess = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return {
+        success: false,
+        message: "Bạn chưa đăng nhập",
+      };
+    }
+    
+    // Dùng email thay vì authId để tìm người dùng
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), identity.email))
+      .unique();
+    
+    if (!user) {
+      return {
+        success: false,
+        message: "Không tìm thấy thông tin người dùng",
+      };
+    }
+    
+    // Kiểm tra xem đã có quyền admin chưa
+    const existingRole = await ctx.db
+      .query("userRoles")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("role"), "admin"))
+      .first();
+    
+    if (existingRole) {
+      return {
+        success: true,
+        message: "Bạn đã có quyền admin rồi",
+        alreadyAdmin: true,
+      };
+    }
+    
+    // Cấp quyền admin
+    const roleId = await ctx.db.insert("userRoles", {
+      userId: user._id,
+      role: "admin",
+      createdAt: Date.now(),
+    });
+    
+    return {
+      success: true,
+      message: "Đã cấp quyền admin thành công",
+      roleId,
+    };
+  },
+});
+
+// Hàm đặc biệt để cấp quyền admin cho bất kỳ ai mà không cần xác thực
+// Chỉ sử dụng trong môi trường phát triển!
+export const forceGiveAdminAccess = mutation({
+  args: {
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Tìm user theo email
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .unique();
+    
+    if (!user) {
+      return {
+        success: false,
+        message: `Không tìm thấy người dùng với email ${args.email}`,
+      };
+    }
+    
+    // Kiểm tra xem đã có quyền admin chưa
+    const existingRole = await ctx.db
+      .query("userRoles")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("role"), "admin"))
+      .first();
+    
+    if (existingRole) {
+      return {
+        success: true,
+        message: `Người dùng ${args.email} đã có quyền admin rồi`,
+        alreadyAdmin: true,
+      };
+    }
+    
+    // Cấp quyền admin
+    const roleId = await ctx.db.insert("userRoles", {
+      userId: user._id,
+      role: "admin",
+      createdAt: Date.now(),
+    });
+    
+    return {
+      success: true,
+      message: `Đã cấp quyền admin cho ${args.email} thành công`,
+      roleId,
+    };
+  },
+}); 

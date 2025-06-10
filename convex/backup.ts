@@ -9,7 +9,7 @@ async function isAdmin(ctx: any) {
   
   const user = await ctx.db
     .query("users")
-    .filter((q) => q.eq(q.field("authId"), identity.subject))
+    .filter((q: any) => q.eq(q.field("authId"), identity.subject))
     .unique();
   
   return user?.role === "admin";
@@ -91,7 +91,12 @@ export const getBackupDetail = query({
   args: {
     backupId: v.id("backups"),
   },
-  returns: v.any(),
+  returns: v.object({
+    _id: v.id("backups"),
+    name: v.string(),
+    data: v.any(),
+    createdAt: v.number(),
+  }),
   handler: async (ctx, args) => {
     const isUserAdmin = await isAdmin(ctx);
     if (!isUserAdmin) {
@@ -151,52 +156,68 @@ export const restoreBackup = mutation({
       await deleteAllData(ctx);
       
       // Khôi phục dữ liệu từ bản sao lưu
-      for (const user of backup.data.users) {
-        await ctx.db.insert("users", {
-          ...user,
-          _id: undefined,
-          _creationTime: undefined,
-        });
-      }
-      
-      for (const product of backup.data.products) {
-        await ctx.db.insert("products", {
-          ...product,
-          _id: undefined,
-          _creationTime: undefined,
-        });
-      }
-      
-      for (const order of backup.data.orders) {
-        await ctx.db.insert("orders", {
-          ...order,
-          _id: undefined,
-          _creationTime: undefined,
-        });
-      }
-      
-      for (const review of backup.data.reviews) {
-        await ctx.db.insert("reviews", {
-          ...review,
-          _id: undefined,
-          _creationTime: undefined,
-        });
-      }
-      
-      for (const item of backup.data.cart || []) {
-        await ctx.db.insert("cart", {
-          ...item,
-          _id: undefined,
-          _creationTime: undefined,
-        });
-      }
-      
-      for (const role of backup.data.userRoles || []) {
-        await ctx.db.insert("userRoles", {
-          ...role,
-          _id: undefined,
-          _creationTime: undefined,
-        });
+      if (backup.data && typeof backup.data === 'object') {
+        const data = backup.data as any;
+
+        // Khôi phục người dùng
+        if (Array.isArray(data.users)) {
+          for (const user of data.users) {
+            const userData = { ...user };
+            delete userData._id;
+            delete userData._creationTime;
+            await ctx.db.insert("users", userData);
+          }
+        }
+        
+        // Khôi phục sản phẩm
+        if (Array.isArray(data.products)) {
+          for (const product of data.products) {
+            const productData = { ...product };
+            delete productData._id;
+            delete productData._creationTime;
+            await ctx.db.insert("products", productData);
+          }
+        }
+        
+        // Khôi phục đơn hàng
+        if (Array.isArray(data.orders)) {
+          for (const order of data.orders) {
+            const orderData = { ...order };
+            delete orderData._id;
+            delete orderData._creationTime;
+            await ctx.db.insert("orders", orderData);
+          }
+        }
+        
+        // Khôi phục đánh giá
+        if (Array.isArray(data.reviews)) {
+          for (const review of data.reviews) {
+            const reviewData = { ...review };
+            delete reviewData._id;
+            delete reviewData._creationTime;
+            await ctx.db.insert("reviews", reviewData);
+          }
+        }
+        
+        // Khôi phục giỏ hàng
+        if (Array.isArray(data.cart)) {
+          for (const item of data.cart) {
+            const cartItemData = { ...item };
+            delete cartItemData._id;
+            delete cartItemData._creationTime;
+            await ctx.db.insert("cart", cartItemData);
+          }
+        }
+        
+        // Khôi phục vai trò người dùng
+        if (Array.isArray(data.userRoles)) {
+          for (const role of data.userRoles) {
+            const roleData = { ...role };
+            delete roleData._id;
+            delete roleData._creationTime;
+            await ctx.db.insert("userRoles", roleData);
+          }
+        }
       }
       
       return { success: true, message: "Backup restored successfully" };
@@ -261,17 +282,8 @@ async function deleteAllData(ctx: any) {
     await ctx.db.delete(role._id);
   }
   
-  // Không xóa người dùng để tránh mất thông tin đăng nhập
-  // Chỉ giữ lại user_id nhưng cập nhật thông tin
   const users = await ctx.db.query("users").collect();
   for (const user of users) {
-    await ctx.db.patch(user._id, {
-      // Giữ lại thông tin đăng nhập, xóa các thông tin khác
-      name: user.name,
-      email: user.email,
-      authId: user.authId,
-      // Đặt lại các thông tin khác
-      role: "user",
-    });
+    await ctx.db.delete(user._id);
   }
 } 

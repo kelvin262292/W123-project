@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ShopVN Navigation Helper</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        button { margin: 10px; padding: 10px 15px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #45a049; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        h1, h2 { color: #333; }
+        code { background-color: #f5f5f5; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+        input { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <h1>ShopVN Navigation Helper</h1>
+    
+    <div class="section">
+        <h2>1. Truy cập trực tiếp thông qua URL</h2>
+        <button onclick="navigateWithHref('/admin')">Đến /admin</button>
+        <button onclick="navigateWithHref('/admin/dashboard')">Đến /admin/dashboard</button>
+        <button onclick="navigateWithHref('/admin/products')">Đến /admin/products</button>
+        <button onclick="navigateWithHref('/admin/orders')">Đến /admin/orders</button>
+    </div>
+    
+    <div class="section">
+        <h2>2. Sử dụng Console Commands</h2>
+        <p>Sao chép và dán các lệnh sau vào Console của trình duyệt khi đang ở trang chính ShopVN:</p>
+        <div>
+            <code>window.location.href = '/admin/dashboard';</code>
+            <button onclick="copyToClipboard('window.location.href = \'/admin/dashboard\';')">Sao chép</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <code>if (typeof window.navigateTo === 'function') { window.navigateTo('admin'); }</code>
+            <button onclick="copyToClipboard('if (typeof window.navigateTo === \'function\') { window.navigateTo(\'admin\'); }')">Sao chép</button>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>3. Thử mở trang và chạy Script</h2>
+        <button onclick="tryCustomNavigate(5173)">Thử cổng 5173</button>
+        <button onclick="tryCustomNavigate(5174)">Thử cổng 5174</button>
+        <button onclick="tryCustomNavigate(5175)">Thử cổng 5175</button>
+        <button onclick="tryCustomNavigate(5176)">Thử cổng 5176</button>
+        <button onclick="tryCustomNavigate(5177)">Thử cổng 5177</button>
+    </div>
+    
+    <div class="section">
+        <h2>4. Cấp quyền admin</h2>
+        <p>Trước tiên, đăng nhập vào trang ShopVN với tài khoản của bạn, sau đó sử dụng các nút sau:</p>
+        <div>
+            <button onclick="giveAdminAccess(5173)" style="background-color: #ff9800;">Cấp quyền admin (cổng 5173)</button>
+            <button onclick="giveAdminAccess(5174)" style="background-color: #ff9800;">Cấp quyền admin (cổng 5174)</button>
+            <button onclick="giveAdminAccess(5175)" style="background-color: #ff9800;">Cấp quyền admin (cổng 5175)</button>
+            <button onclick="giveAdminAccess(5176)" style="background-color: #ff9800;">Cấp quyền admin (cổng 5176)</button>
+            <button onclick="giveAdminAccess(5177)" style="background-color: #ff9800;">Cấp quyền admin (cổng 5177)</button>
+        </div>
+        <div style="margin-top: 15px;">
+            <p>Hoặc cấp quyền admin cho email cụ thể:</p>
+            <input type="email" id="adminEmail" placeholder="Nhập email cần cấp quyền admin" value="admin@shopvn.com">
+            <button onclick="forceGiveAdminAccess()" style="background-color: #e91e63;">Cấp quyền admin cho email</button>
+        </div>
+        <div id="adminResult" style="margin-top: 10px; padding: 10px; background-color: #f9f9f9;"></div>
+    </div>
+    
+    <div class="section">
+        <h2>5. Kiểm tra trạng thái ứng dụng</h2>
+        <button onclick="checkApplicationState()">Kiểm tra ứng dụng</button>
+        <div id="appState" style="margin-top: 10px; padding: 10px; background-color: #f9f9f9;"></div>
+    </div>
+    
+    <script>
+        function navigateWithHref(path) {
+            // Thử với các cổng khác nhau
+            const ports = [5173, 5174, 5175, 5176, 5177];
+            
+            ports.forEach(port => {
+                const baseUrl = `http://localhost:${port}`;
+                window.open(baseUrl + path, `_port_${port}`);
+            });
+        }
+        
+        function tryCustomNavigate(port) {
+            const win = window.open(`http://localhost:${port}`, `_custom_${port}`);
+            
+            // Thêm thông báo cho người dùng
+            setTimeout(() => {
+                try {
+                    const message = `
+                    Vui lòng mở Console (F12) trong cửa sổ mới và thử lệnh:
+                    1. window.location.href = '/admin/dashboard';
+                    2. Nếu có hàm navigateTo: window.navigateTo('admin');
+                    `;
+                    win.alert(message);
+                } catch (e) {
+                    console.error(`Lỗi khi mở cổng ${port}:`, e);
+                }
+            }, 2000);
+        }
+        
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('Đã sao chép lệnh! Bạn có thể dán vào Console của trình duyệt.');
+        }
+        
+        function giveAdminAccess(port) {
+            const adminResult = document.getElementById('adminResult');
+            adminResult.innerHTML = `<p>Đang cấp quyền admin trên cổng ${port}...</p>`;
+            
+            // Tạo một iframe để thực hiện request trong cùng domain
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            
+            iframe.onload = function() {
+                try {
+                    // Tạo một script element để thực hiện request
+                    const script = iframe.contentDocument.createElement('script');
+                    script.textContent = `
+                        // Gọi API cấp quyền admin
+                        fetch('/api/v1/roles/giveAdminAccess', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            window.parent.postMessage({
+                                type: 'adminResult',
+                                success: data.success,
+                                message: data.message
+                            }, '*');
+                        })
+                        .catch(error => {
+                            window.parent.postMessage({
+                                type: 'adminResult',
+                                success: false,
+                                message: 'Lỗi khi gọi API: ' + error.message
+                            }, '*');
+                        });
+                    `;
+                    iframe.contentDocument.body.appendChild(script);
+                } catch (e) {
+                    adminResult.innerHTML = `<p style="color: red;">Lỗi: ${e.message}</p>`;
+                    document.body.removeChild(iframe);
+                }
+            };
+            
+            iframe.src = `http://localhost:${port}`;
+            
+            // Lắng nghe kết quả từ iframe
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'adminResult') {
+                    if (event.data.success) {
+                        adminResult.innerHTML = `<p style="color: green;">${event.data.message}</p>`;
+                    } else {
+                        adminResult.innerHTML = `<p style="color: red;">${event.data.message}</p>`;
+                    }
+                    // Xóa iframe sau khi hoàn thành
+                    document.body.removeChild(iframe);
+                }
+            });
+            
+            // Cách khác: Mở cửa sổ mới và hướng dẫn người dùng
+            const instructions = `
+                Một cách khác để cấp quyền admin:
+                
+                1. Trong console của trang ShopVN, dán lệnh sau:
+                
+                fetch('/api/v1/convex/roles:giveAdminAccess', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                }).then(r => r.json()).then(console.log)
+                
+                2. Hoặc gọi mutation trong Convex bằng:
+                
+                await convex.mutation('roles:giveAdminAccess')({})
+            `;
+            
+            setTimeout(() => {
+                adminResult.innerHTML += `<pre style="background: #f0f0f0; padding: 10px; margin-top: 10px; overflow: auto;">${instructions}</pre>`;
+            }, 3000);
+        }
+        
+        function forceGiveAdminAccess() {
+            const email = document.getElementById('adminEmail').value;
+            const adminResult = document.getElementById('adminResult');
+            
+            if (!email) {
+                adminResult.innerHTML = `<p style="color: red;">Vui lòng nhập email</p>`;
+                return;
+            }
+            
+            adminResult.innerHTML = `<p>Đang cấp quyền admin cho ${email}...</p>`;
+            
+            // Chỉ hướng dẫn người dùng cách thực hiện
+            const instructions = `
+                Để cấp quyền admin cho email ${email}, hãy:
+                
+                1. Mở console trong trang ShopVN
+                2. Dán lệnh sau:
+                
+                fetch('/api/v1/convex/roles:forceGiveAdminAccess', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: '${email}' })
+                }).then(r => r.json()).then(console.log)
+                
+                3. Hoặc gọi mutation trong Convex:
+                
+                await convex.mutation('roles:forceGiveAdminAccess')({ email: '${email}' })
+            `;
+            
+            adminResult.innerHTML = `<pre style="background: #f0f0f0; padding: 10px; overflow: auto;">${instructions}</pre>`;
+        }
+        
+        function checkApplicationState() {
+            const appStateDiv = document.getElementById('appState');
+            appStateDiv.innerHTML = '<p>Đang kiểm tra trạng thái ứng dụng...</p>';
+            
+            // Kiểm tra các cổng
+            const ports = [5173, 5174, 5175, 5176, 5177];
+            let results = '<h3>Kết quả kiểm tra:</h3><ul>';
+            
+            let checkedCount = 0;
+            
+            ports.forEach(port => {
+                const xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        checkedCount++;
+                        if (xhr.status === 200) {
+                            results += `<li>Cổng ${port}: <span style="color:green">Hoạt động</span></li>`;
+                        } else {
+                            results += `<li>Cổng ${port}: <span style="color:red">Không phản hồi</span></li>`;
+                        }
+                        
+                        if (checkedCount === ports.length) {
+                            results += '</ul>';
+                            results += '<p>Lời khuyên: Thử truy cập trang admin qua các cổng đang hoạt động.</p>';
+                            appStateDiv.innerHTML = results;
+                        }
+                    }
+                };
+                
+                xhr.open('GET', `http://localhost:${port}`, true);
+                xhr.timeout = 3000;
+                xhr.send();
+            });
+        }
+    </script>
+</body>
+</html> 

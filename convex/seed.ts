@@ -1,4 +1,5 @@
 import { mutation } from "./_generated/server";
+import { v } from "convex/values";
 
 export const seedData = mutation({
   args: {},
@@ -288,5 +289,35 @@ export const seedData = mutation({
     }
 
     return `Created ${categories.length} categories and ${products.length} products`;
+  },
+});
+
+// Hàm để tạo tài khoản admin mẫu
+export const seedAdmin = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Tạo người dùng admin
+    const userId = await ctx.db.insert("users", {
+      name: "Admin ShopVN",
+      email: "admin@shopvn.com",
+      role: "admin",
+      authId: "admin_auth_id", // Giả định ID xác thực
+      createdAt: Date.now(),
+    });
+
+    // Thêm quyền admin cho người dùng
+    await ctx.db.insert("userRoles", {
+      userId,
+      role: "admin",
+      createdAt: Date.now(),
+    });
+
+    return { 
+      success: true, 
+      message: "Tài khoản admin đã được tạo thành công", 
+      userId, 
+      email: "admin@shopvn.com",
+      password: "admin123" // Mật khẩu mẫu (trong thực tế, không nên lưu mật khẩu plaintext)
+    };
   },
 });

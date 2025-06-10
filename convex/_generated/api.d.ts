@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
+import type * as backup from "../backup.js";
 import type * as banners from "../banners.js";
 import type * as cart from "../cart.js";
 import type * as categories from "../categories.js";
@@ -26,6 +27,7 @@ import type * as orders from "../orders.js";
 import type * as paymentActions from "../paymentActions.js";
 import type * as payments from "../payments.js";
 import type * as products from "../products.js";
+import type * as reports from "../reports.js";
 import type * as roles from "../roles.js";
 import type * as router from "../router.js";
 import type * as seed from "../seed.js";
@@ -41,6 +43,7 @@ import type * as seed from "../seed.js";
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   auth: typeof auth;
+  backup: typeof backup;
   banners: typeof banners;
   cart: typeof cart;
   categories: typeof categories;
@@ -52,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   paymentActions: typeof paymentActions;
   payments: typeof payments;
   products: typeof products;
+  reports: typeof reports;
   roles: typeof roles;
   router: typeof router;
   seed: typeof seed;

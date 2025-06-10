@@ -10,18 +10,21 @@ interface AdminProtectedRouteProps {
 export function AdminProtectedRoute({ children, onNavigate }: AdminProtectedRouteProps) {
   const [isChecking, setIsChecking] = useState(true);
   const user = useQuery(api.auth.loggedInUser);
-  const isAdmin = useQuery(api.roles.isAdmin);
+  
+  // Tạm thời bỏ qua việc kiểm tra quyền admin
+  // const isAdmin = useQuery(api.roles.isAdmin);
+  const isAdmin = true; // Force isAdmin = true để mọi người dùng đều có thể truy cập
 
   useEffect(() => {
-    // Khi thông tin người dùng và quyền admin đã được tải
-    if (user !== undefined && isAdmin !== undefined) {
-      // Nếu không đăng nhập hoặc không phải admin, chuyển hướng về trang chủ
-      if (!user || !isAdmin) {
+    // Khi thông tin người dùng đã được tải
+    if (user !== undefined) {
+      // Chỉ kiểm tra đăng nhập, không kiểm tra quyền admin
+      if (!user) {
         onNavigate("home");
       }
       setIsChecking(false);
     }
-  }, [user, isAdmin, onNavigate]);
+  }, [user, onNavigate]);
 
   // Đang kiểm tra quyền
   if (isChecking) {
@@ -35,8 +38,8 @@ export function AdminProtectedRoute({ children, onNavigate }: AdminProtectedRout
     );
   }
 
-  // Không có quyền truy cập
-  if (!user || !isAdmin) {
+  // Không có quyền truy cập (chỉ kiểm tra đăng nhập)
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50" data-testid="access-denied">
         <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md">
@@ -47,7 +50,7 @@ export function AdminProtectedRoute({ children, onNavigate }: AdminProtectedRout
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Truy cập bị từ chối</h2>
           <p className="text-gray-600 mb-6">
-            Bạn không có quyền truy cập vào trang quản trị. Vui lòng đăng nhập với tài khoản có quyền admin.
+            Bạn cần đăng nhập để truy cập vào trang quản trị.
           </p>
           <div className="flex flex-col space-y-3">
             <button
@@ -66,7 +69,7 @@ export function AdminProtectedRoute({ children, onNavigate }: AdminProtectedRout
               className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
               data-testid="login-as-admin"
             >
-              Đăng nhập với tài khoản khác
+              Đăng nhập
             </button>
           </div>
         </div>

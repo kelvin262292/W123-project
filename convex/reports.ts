@@ -50,8 +50,8 @@ async function checkAdminAccess(ctx: any) {
   
   const userRole = await ctx.db
     .query("userRoles")
-    .withIndex("by_user", (q) => q.eq("userId", userId))
-    .filter((q) => q.eq(q.field("role"), "admin"))
+    .withIndex("by_user", (q: any) => q.eq("userId", userId))
+    .filter((q: any) => q.eq(q.field("role"), "admin"))
     .first();
   
   if (!userRole) {
@@ -295,11 +295,11 @@ export const generateOrdersReport = action({
     // Lấy thông tin người dùng
     const userIds = [...new Set(orders.map((order) => order.userId))];
     const users = await Promise.all(
-      userIds.map((userId) => ctx.runQuery(api.auth.getUser, { userId }))
+      userIds.map((userId) => ctx.db.get(userId))
     );
     
     // Map userId to user info
-    const userMap = users.reduce((map: Record<string, User>, user) => {
+    const userMap = users.reduce((map: Record<string, User>, user: any) => {
       if (user) {
         map[user._id] = user;
       }

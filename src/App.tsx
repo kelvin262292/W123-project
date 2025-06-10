@@ -30,14 +30,13 @@ type Page =
   | "admin";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>("home");
+  const [currentPage, setCurrentPage] = useState<Page>("admin");
   const [selectedProductSlug, setSelectedProductSlug] = useState<string>("");
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>("");
 
   const user = useQuery(api.auth.loggedInUser);
   const isAdmin = useQuery(api.admin.isAdmin) || false;
 
-  // Listen for navigation events from Footer
   useEffect(() => {
     const handleFooterNavigation = (event: CustomEvent) => {
       const page = event.detail as Page;
@@ -51,6 +50,13 @@ export default function App() {
     return () => {
       window.removeEventListener('navigate', handleFooterNavigation as EventListener);
     };
+  }, []);
+
+  useEffect(() => {
+    // @ts-ignore
+    window.navigateTo = navigateTo;
+    // @ts-ignore
+    window.goToAdmin = () => navigateTo("admin");
   }, []);
 
   const navigateTo = (page: Page, slug?: string) => {
@@ -92,7 +98,11 @@ export default function App() {
           </AdminProtectedRoute>
         );
       default:
-        return <HomePage onNavigate={navigateTo} />;
+        return (
+          <AdminProtectedRoute>
+            <AdminLayout onNavigate={navigateTo} />
+          </AdminProtectedRoute>
+        );
     }
   };
 

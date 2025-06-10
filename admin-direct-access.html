@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ShopVN Admin Direct Access</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1, h2 { color: #333; }
+        textarea { width: 100%; height: 150px; margin: 10px 0; font-family: monospace; padding: 10px; }
+        button { 
+            padding: 10px 15px; 
+            background-color: #4CAF50; 
+            color: white; 
+            border: none; 
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #45a049; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>ShopVN Admin Direct Access</h1>
+    
+    <div class="section">
+        <h2>Hướng dẫn</h2>
+        <p>Script này sẽ giúp bạn truy cập trực tiếp vào Admin Panel bằng cách sửa đổi React Component State của ứng dụng. Làm theo các bước sau:</p>
+        <ol>
+            <li>Mở trang <a href="http://localhost:5175" target="_blank">http://localhost:5175</a> (hoặc cổng đang chạy)</li>
+            <li>Đăng nhập với tài khoản của bạn</li>
+            <li>Mở Developer Console (F12 hoặc Ctrl+Shift+I)</li>
+            <li>Sao chép script từ hộp bên dưới và dán vào Console</li>
+            <li>Nhấn Enter để thực thi</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>Script để truy cập trang Admin</h2>
+        <textarea id="adminScript">
+// Script 1: Thay đổi state currentPage của App component
+(function() {
+    // Tìm instance của React
+    const reactInstance = window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.get(1)?._rendererInterfaces?.get(1);
+    
+    if (reactInstance) {
+        console.log("Đã tìm thấy React instance");
+        
+        // Tìm App component
+        const appFiber = Array.from(reactInstance.getNodes().entries())
+            .find(([, node]) => node?.name === "App" && node?.type?.name === "App");
+        
+        if (appFiber) {
+            const [fiberID] = appFiber;
+            const fiber = reactInstance.getFiberForID(fiberID);
+            
+            if (fiber && fiber.stateNode) {
+                console.log("Đã tìm thấy App component");
+                
+                // Thay đổi state để chuyển đến trang admin
+                fiber.stateNode.setState({ currentPage: "admin" });
+                console.log("Đã chuyển đến trang Admin Panel");
+            } else {
+                console.error("Không thể truy cập stateNode của App component");
+            }
+        } else {
+            console.error("Không tìm thấy App component");
+        }
+    } else {
+        console.error("Không tìm thấy React DevTools hook. Hãy thử phương pháp khác.");
+    }
+})();
+        </textarea>
+        <button onclick="copyScript('adminScript')">Sao chép script</button>
+    </div>
+
+    <div class="section">
+        <h2>Phương pháp thay thế</h2>
+        <p>Nếu script trên không hoạt động, hãy thử các cách sau:</p>
+        
+        <h3>1. Thử thay đổi URL trực tiếp</h3>
+        <pre>window.location.href = '/admin/dashboard';</pre>
+        <button onclick="copyText('window.location.href = \'/admin/dashboard\';')">Sao chép</button>
+        
+        <h3>2. Tìm và gọi hàm navigateTo</h3>
+        <pre>
+// Tìm hàm navigateTo trong phạm vi toàn cục
+Object.keys(window).forEach(key => {
+  if (typeof window[key] === 'function' && 
+      window[key].toString().includes('navigateTo')) {
+    console.log('Đã tìm thấy hàm navigateTo trong:', key);
+  }
+});
+
+// Nếu tìm thấy, gọi hàm
+window.navigateTo('admin');
+</pre>
+        <button onclick="copyText('Object.keys(window).forEach(key => {\n  if (typeof window[key] === \'function\' && \n      window[key].toString().includes(\'navigateTo\')) {\n    console.log(\'Đã tìm thấy hàm navigateTo trong:\', key);\n  }\n});\n\n// Nếu tìm thấy, gọi hàm\nwindow.navigateTo(\'admin\');')">Sao chép</button>
+        
+        <h3>3. Truy cập React Fiber Node và gọi hàm navigateTo</h3>
+        <pre>
+// Tìm App component và gọi navigateTo
+(function() {
+  // Tìm instance của React
+  const reactInstance = window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.get(1)?._rendererInterfaces?.get(1);
+  
+  if (reactInstance) {
+    // Tìm App component
+    const appFiber = Array.from(reactInstance.getNodes().entries())
+      .find(([, node]) => node?.name === "App" && node?.type?.name === "App");
+    
+    if (appFiber) {
+      const [fiberID] = appFiber;
+      const fiber = reactInstance.getFiberForID(fiberID);
+      
+      if (fiber && fiber.stateNode && fiber.stateNode.navigateTo) {
+        // Gọi hàm navigateTo
+        fiber.stateNode.navigateTo("admin");
+        console.log("Đã gọi hàm navigateTo");
+      }
+    }
+  }
+})();
+</pre>
+        <button onclick="copyText('(function() {\n  // Tìm instance của React\n  const reactInstance = window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.get(1)?._rendererInterfaces?.get(1);\n  \n  if (reactInstance) {\n    // Tìm App component\n    const appFiber = Array.from(reactInstance.getNodes().entries())\n      .find(([, node]) => node?.name === "App" && node?.type?.name === "App");\n    \n    if (appFiber) {\n      const [fiberID] = appFiber;\n      const fiber = reactInstance.getFiberForID(fiberID);\n      \n      if (fiber && fiber.stateNode && fiber.stateNode.navigateTo) {\n        // Gọi hàm navigateTo\n        fiber.stateNode.navigateTo("admin");\n        console.log("Đã gọi hàm navigateTo");\n      }\n    }\n  }\n})();')">Sao chép</button>
+    </div>
+
+    <div class="section">
+        <h2>Tạo trình đơn truy cập Admin trên trang web</h2>
+        <p>Script sau sẽ tạo một nút cố định trên trang để truy cập Admin Panel:</p>
+        <pre>
+// Tạo nút Admin trên trang
+(function() {
+  const adminButton = document.createElement('button');
+  adminButton.textContent = 'Admin Panel';
+  adminButton.style.position = 'fixed';
+  adminButton.style.bottom = '20px';
+  adminButton.style.right = '20px';
+  adminButton.style.zIndex = '9999';
+  adminButton.style.padding = '10px 15px';
+  adminButton.style.backgroundColor = '#4CAF50';
+  adminButton.style.color = 'white';
+  adminButton.style.border = 'none';
+  adminButton.style.borderRadius = '4px';
+  adminButton.style.cursor = 'pointer';
+  
+  adminButton.onclick = function() {
+    // Tìm App component và thay đổi state
+    try {
+      const reactInstance = window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.get(1)?._rendererInterfaces?.get(1);
+      
+      if (reactInstance) {
+        const appFiber = Array.from(reactInstance.getNodes().entries())
+          .find(([, node]) => node?.name === "App" && node?.type?.name === "App");
+        
+        if (appFiber) {
+          const [fiberID] = appFiber;
+          const fiber = reactInstance.getFiberForID(fiberID);
+          
+          if (fiber && fiber.stateNode) {
+            fiber.stateNode.setState({ currentPage: "admin" });
+            console.log("Đã chuyển đến trang Admin Panel");
+            return;
+          }
+        }
+      }
+      
+      // Nếu không thể truy cập React, thử phương pháp thay thế
+      if (typeof window.navigateTo === 'function') {
+        window.navigateTo('admin');
+      } else {
+        window.location.href = '/admin/dashboard';
+      }
+    } catch (e) {
+      console.error('Lỗi khi truy cập Admin Panel:', e);
+      window.location.href = '/admin/dashboard';
+    }
+  };
+  
+  document.body.appendChild(adminButton);
+})();
+</pre>
+        <button onclick="copyText('(function() {\n  const adminButton = document.createElement(\'button\');\n  adminButton.textContent = \'Admin Panel\';\n  adminButton.style.position = \'fixed\';\n  adminButton.style.bottom = \'20px\';\n  adminButton.style.right = \'20px\';\n  adminButton.style.zIndex = \'9999\';\n  adminButton.style.padding = \'10px 15px\';\n  adminButton.style.backgroundColor = \'#4CAF50\';\n  adminButton.style.color = \'white\';\n  adminButton.style.border = \'none\';\n  adminButton.style.borderRadius = \'4px\';\n  adminButton.style.cursor = \'pointer\';\n  \n  adminButton.onclick = function() {\n    // Tìm App component và thay đổi state\n    try {\n      const reactInstance = window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.get(1)?._rendererInterfaces?.get(1);\n      \n      if (reactInstance) {\n        const appFiber = Array.from(reactInstance.getNodes().entries())\n          .find(([, node]) => node?.name === "App" && node?.type?.name === "App");\n        \n        if (appFiber) {\n          const [fiberID] = appFiber;\n          const fiber = reactInstance.getFiberForID(fiberID);\n          \n          if (fiber && fiber.stateNode) {\n            fiber.stateNode.setState({ currentPage: "admin" });\n            console.log("Đã chuyển đến trang Admin Panel");\n            return;\n          }\n        }\n      }\n      \n      // Nếu không thể truy cập React, thử phương pháp thay thế\n      if (typeof window.navigateTo === \'function\') {\n        window.navigateTo(\'admin\');\n      } else {\n        window.location.href = \'/admin/dashboard\';\n      }\n    } catch (e) {\n      console.error(\'Lỗi khi truy cập Admin Panel:\', e);\n      window.location.href = \'/admin/dashboard\';\n    }\n  };\n  \n  document.body.appendChild(adminButton);\n})();')">Sao chép</button>
+    </div>
+
+    <script>
+        function copyScript(id) {
+            const textarea = document.getElementById(id);
+            textarea.select();
+            document.execCommand('copy');
+            alert('Đã sao chép script! Dán vào Console và nhấn Enter.');
+        }
+        
+        function copyText(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('Đã sao chép! Dán vào Console và nhấn Enter.');
+        }
+    </script>
+</body>
+</html> 
